@@ -14,6 +14,7 @@ import (
 	"errors"
 	"maps"
 	"math"
+	"runtime"
 	"slices"
 	"sync"
 )
@@ -27,6 +28,7 @@ var (
 	ErrInvalidThreshold = errors.New("threshold must be between 0 and 1")
 	ErrInvalidN         = errors.New("n must be > 0")
 	ErrInvalidQ         = errors.New("query must be non-zero length")
+	ErrInvalidParallel  = errors.New("number of threads must be >= 0")
 )
 
 type Collection struct {
@@ -34,6 +36,7 @@ type Collection struct {
 	d         []*indexedDocument
 	avgdl     float64 // average document length in the collection
 	tokenizer Tokenizer
+	p         int
 }
 
 type Tokenizer func(string) (map[string]int, error)
@@ -45,6 +48,14 @@ type ScoredDocument struct {
 
 func (c *Collection) SetTokenizer(t Tokenizer) {
 	c.tokenizer = t
+}
+
+func (c *Collection) SetParallel(p int) error {
+	if p < 0 {
+		return ErrInvalidParallel
+	}
+	c.p = p
+	return nil
 }
 
 func (c *Collection) AddDocument(d Document) error {
@@ -111,12 +122,41 @@ func (c *Collection) Score(q string, n int, t float64) ([]*ScoredDocument, error
 	h := new(scoredHeap)
 	heap.Init(h)
 
-	for _, v := range c.d {
-		s := score(v, c.avgdl, idfs, qk)
-		heap.Push(h, &ScoredDocument{
-			S: s,
-			D: v.d,
-		})
+	p := c.p
+	if p == 0 {
+		p = runtime.NumCPU()
+	}
+
+	// split documents into p partitions, or the length of documents if it's less than p
+	part := p
+	if len(c.d) < p {
+		part = len(c.d)
+	}
+	step := len(c.d) / part
+	remainder := len(c.d) % part
+
+	coalesce := make(chan *ScoredDocument, len(c.d))
+	var wg sync.WaitGroup
+	var last int
+	for i := range part {
+		wg.Add(1)
+		start := last
+		end := start + step
+		if i < remainder {
+			end++
+		}
+		if end > len(c.d) {
+			end = len(c.d)
+		}
+		go scorePartition(coalesce, c.d[start:end], c.avgdl, idfs, qk, &wg)
+		last = end
+	}
+
+	wg.Wait()
+	close(coalesce)
+
+	for s := range coalesce {
+		heap.Push(h, s)
 		if h.Len() > n {
 			heap.Pop(h)
 		}
@@ -168,4 +208,15 @@ func score(id *indexedDocument, avgdl float64, idfs []float64, qk []string) floa
 		s += x
 	}
 	return s
+}
+
+func scorePartition(coalesce chan *ScoredDocument, docs []*indexedDocument, avgdl float64, idfs []float64, qk []string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for _, v := range docs {
+		s := score(v, avgdl, idfs, qk)
+		coalesce <- &ScoredDocument{
+			S: s,
+			D: v.d,
+		}
+	}
 }
