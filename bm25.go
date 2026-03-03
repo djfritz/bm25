@@ -43,6 +43,10 @@ type ScoredDocument struct {
 	D Document
 }
 
+func (c *Collection) SetTokenizer(t Tokenizer) {
+	c.tokenizer = t
+}
+
 func (c *Collection) AddDocument(d Document) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
@@ -127,6 +131,9 @@ func (c *Collection) Score(q string, n int, t float64) ([]*ScoredDocument, error
 }
 
 func (c *Collection) tokenizeQuery(q string) ([]string, error) {
+	if c.tokenizer == nil {
+		return nil, ErrNilTokenizer
+	}
 	m, err := c.tokenizer(q)
 	if err != nil {
 		return nil, err
@@ -157,7 +164,8 @@ func score(id *indexedDocument, avgdl float64, idfs []float64, qk []string) floa
 		if fdq == 0 {
 			continue
 		}
-		s += idf * ((float64(fdq) * (k1 + 1)) / (float64(fdq) + k1*(1-b+b*(float64(id.n)/avgdl))))
+		x := idf * ((float64(fdq) * (k1 + 1)) / (float64(fdq) + k1*(1-b+b*(float64(id.n)/avgdl))))
+		s += x
 	}
 	return s
 }

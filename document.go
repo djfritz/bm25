@@ -4,6 +4,14 @@
 
 package bm25
 
+import (
+	"errors"
+	"strings"
+	"unicode"
+)
+
+var ErrNilTokenizer = errors.New("nil tokenizer")
+
 type Document interface {
 	Text() string
 }
@@ -29,6 +37,9 @@ func (t *TextDocument) Text() string {
 }
 
 func (id *indexedDocument) index(t Tokenizer) error {
+	if t == nil {
+		return ErrNilTokenizer
+	}
 	k, err := t(id.d.Text())
 	if err != nil {
 		return err
@@ -38,4 +49,18 @@ func (id *indexedDocument) index(t Tokenizer) error {
 		id.n += v
 	}
 	return nil
+}
+
+func Tokenize(text string) (map[string]int, error) {
+	lower := strings.ToLower(text)
+	words := strings.FieldsFunc(lower, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	qk := make(map[string]int)
+	for _, w := range words {
+		if len(w) >= 2 {
+			qk[w]++
+		}
+	}
+	return qk, nil
 }
