@@ -33,7 +33,7 @@ func TestCollection(t *testing.T) {
 	}
 
 	q := "other document"
-	scores, err := c.Score(q, 2, 0)
+	scores, err := c.Score(q, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestCollectionParallel(t *testing.T) {
 		}
 	}
 
-	scores, err := c.Score("document number", 1000, 0)
+	scores, err := c.Score("document number", 1000)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +84,7 @@ func TestCollectionParallelResults(t *testing.T) {
 	}
 
 	q := "other document"
-	scores, err := c.Score(q, 2, 0)
+	scores, err := c.Score(q, 2)
 	if err != nil {
 		t.Fatal(err)
 	}

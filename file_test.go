@@ -61,7 +61,7 @@ func TestSaveLoad(t *testing.T) {
 	}
 
 	c2.SetTokenizer(Tokenize)
-	scores, err := c2.Score("other document", 2, 0)
+	scores, err := c2.Score("other document", 2)
 	if err != nil {
 		t.Fatal(err)
 	}

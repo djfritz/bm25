@@ -25,10 +25,9 @@ const (
 )
 
 var (
-	ErrInvalidThreshold = errors.New("threshold must be between 0 and 1")
-	ErrInvalidN         = errors.New("n must be > 0")
-	ErrInvalidQ         = errors.New("query must be non-zero length")
-	ErrInvalidParallel  = errors.New("number of threads must be >= 0")
+	ErrInvalidN        = errors.New("n must be > 0")
+	ErrInvalidQ        = errors.New("query must be non-zero length")
+	ErrInvalidParallel = errors.New("number of threads must be >= 0")
 )
 
 type Collection struct {
@@ -99,12 +98,9 @@ func (s *scoredHeap) Pop() any {
 	return x
 }
 
-func (c *Collection) Score(q string, n int, t float64) ([]*ScoredDocument, error) {
+func (c *Collection) Score(q string, n int) ([]*ScoredDocument, error) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
-	if t < 0 || t > 1 {
-		return nil, ErrInvalidThreshold
-	}
 	if n < 1 {
 		return nil, ErrInvalidN
 	}
