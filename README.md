@@ -4,12 +4,6 @@ A simple [Okapi BM25](https://en.wikipedia.org/wiki/Okapi_BM25) ranking function
 
 The implementation was derived from *An Introduction to Information Retrieval*, Manning et al., page 233.
 
-## Install
-
-```
-go get github.com/djfritz/bm25
-```
-
 ## Usage
 
 ```go
