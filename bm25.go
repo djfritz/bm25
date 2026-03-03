@@ -2,8 +2,7 @@
 // This software may be modified and distributed under the terms of the BSD
 // 2-clause license. See the LICENSE file for details.
 
-// Package bm25 implements a modified Okapi BM25 ranking function. It supports
-// document retrieval, and and differs from BM25 by normalizing ranks on [0,1].
+// Package bm25 implements the Okapi BM25 ranking function.
 //
 // The implementation was derived from "An Introduction to Information
 // Retrieval, Manning et al., page 233".
