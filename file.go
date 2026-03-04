@@ -90,3 +90,30 @@ func Load(f string) (*Collection, error) {
 	}
 	return c, nil
 }
+
+func (c *Collection) GobEncode() ([]byte, error) {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	if err := enc.Encode(c.d); err != nil {
+		return nil, err
+	}
+	if err := enc.Encode(c.avgdl); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func (c *Collection) GobDecode(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+	if err := dec.Decode(&c.d); err != nil {
+		return err
+	}
+	if err := dec.Decode(&c.avgdl); err != nil {
+		return err
+	}
+	return nil
+}
