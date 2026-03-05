@@ -44,6 +44,24 @@ type ScoredDocument struct {
 	D Document
 }
 
+func (c *Collection) Len() int {
+	return len(c.d)
+}
+
+func (c *Collection) Keywords() []string {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+
+	kw := make(map[string]bool)
+
+	for _, d := range c.d {
+		for k, _ := range d.k {
+			kw[k] = true
+		}
+	}
+	return slices.Sorted(maps.Keys(kw))
+}
+
 func (c *Collection) SetTokenizer(t Tokenizer) {
 	c.tokenizer = t
 }
