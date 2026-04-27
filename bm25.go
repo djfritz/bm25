@@ -124,6 +124,9 @@ func (c *Collection) Score(q string, n int) ([]*ScoredDocument, error) {
 	if len(q) == 0 {
 		return nil, ErrInvalidQ
 	}
+	if len(c.d) == 0 {
+		return nil, nil
+	}
 
 	// tokenize the query
 	qk, err := c.tokenizeQuery(q)
